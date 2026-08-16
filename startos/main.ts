@@ -6,10 +6,9 @@ import { mounts, uiPort } from './utils'
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting copyparty'))
 
-  const conf = await copypartyConf.read().const(effects)
-  if (conf?.publicRead) {
-    console.info(i18n('Public downloads are enabled'))
-  }
+  // Both actions write this file while the service is running; re-running main
+  // on a change is what restarts copyparty so they take effect.
+  await copypartyConf.read().const(effects)
 
   const subcontainer = sdk.SubContainer.of(
     effects,
