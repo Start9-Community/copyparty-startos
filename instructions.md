@@ -30,9 +30,9 @@ The magnifying glass searches by name, and also by media tag once copyparty has 
 
 copyparty serves WebDAV on the same address as the web interface, so you can mount it as a drive:
 
-- **Windows** — File Explorer, right-click *This PC* → *Map network drive*, and enter your copyparty address.
-- **macOS** — Finder, *Go* → *Connect to Server*, and enter your copyparty address.
-- **Linux** — in most file managers, *Other Locations* → *Connect to Server*, prefixing the address with `davs://`.
+- **Windows** — File Explorer, right-click _This PC_ → _Map network drive_, and enter your copyparty address.
+- **macOS** — Finder, _Go_ → _Connect to Server_, and enter your copyparty address.
+- **Linux** — in most file managers, _Other Locations_ → _Connect to Server_, prefixing the address with `davs://`.
 
 Sign in with `admin` and your admin password.
 

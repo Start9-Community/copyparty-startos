@@ -9,8 +9,10 @@ const shape = z.object({
 
 type Config = z.infer<typeof shape>
 
-// copyparty's config is a bespoke indented format, not YAML. The image includes
-// every *.conf in /cfg alphabetically, so users can add their own beside this one.
+// copyparty's config is a bespoke indented format, not YAML -- the modeline in
+// upstream's examples is for editor highlighting only. The image includes every
+// *.conf in /cfg alphabetically; the 00- prefix reserves ordering for us and
+// leaves every later filename to the user, so never write to one they might pick.
 function toFile({ adminPassword, publicRead }: Config): string {
   const accounts = adminPassword ? `  ${adminUsername}: ${adminPassword}\n` : ''
   const anonymous = publicRead ? '    r: *\n' : ''

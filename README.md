@@ -9,7 +9,10 @@
 > upstream documentation is accurate and fully applicable — see the
 > Documentation section of `instructions.md` for links.
 
-copyparty is a self-hosted file server with a browser UI, resumable chunked uploads, a media indexer, thumbnails, and WebDAV — all from a single process. Upstream: <https://github.com/9001/copyparty>.
+[copyparty](https://github.com/9001/copyparty) is a file server with a browser UI, resumable chunked uploads, a media indexer, thumbnails and WebDAV, all from a single process. On StartOS its files and its server state live on separate volumes, the whole configuration is generated from two package-owned settings, and the single `admin` account is created by an action rather than by editing a config file.
+
+- **Upstream repo:** <https://github.com/9001/copyparty>
+- **Wrapper repo:** <https://github.com/Start9Labs/copyparty-startos>
 
 ---
 
@@ -26,46 +29,58 @@ copyparty is a self-hosted file server with a browser UI, resumable chunked uplo
 - [Health Checks](#health-checks)
 - [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-One prebuilt upstream image, run in a single subcontainer named `copyparty-sub`. The package launches the image's own entrypoint via `sdk.useEntrypoint()`, which applies the baked bootstrap config (`chdir: /w`, `no-crt`) and then includes every `*.conf` file in `/cfg`.
+The upstream image is used unmodified, with its own entrypoint, and one subcontainer runs the service.
 
-| | |
-| --- | --- |
-| Image id | `copyparty` |
-| Upstream image | `copyparty/ac` |
-| Architectures | `x86_64`, `aarch64` |
-| Subcontainer | `copyparty-sub` |
-| Runs as | root (the image declares no `USER`) |
+| Property      | Value                                                              |
+| ------------- | ------------------------------------------------------------------ |
+| Image         | `copyparty/ac`                                                     |
+| Architectures | x86_64, aarch64                                                    |
+| Entrypoint    | Upstream default                                                   |
+| Runs as       | root — the image declares no `USER`                                |
+| Subcontainer  | `copyparty-sub` — the `primary` daemon, and the one to `attach` to |
 
-The `ac` edition is upstream's recommended general-purpose build; it bundles FFmpeg, Pillow and Mutagen, which is what makes media thumbnails, audio transcoding and tag indexing work. Because the container runs as root, mounted volumes need no ownership fixup and there is no `chown` oneshot.
+The `ac` edition bundles FFmpeg, Pillow and Mutagen, which is what makes media thumbnails, audio transcoding and tag indexing work.
 
-No StartOS-managed environment variables are set. Everything is driven by the generated config file.
+The entrypoint applies a bootstrap config baked into the image — `chdir: /w` and `no-crt` — and ends with `% /cfg`, which includes every `*.conf` file in that directory in alphabetical order. That include is what loads the package's own config, and it is also the escape hatch described under [File Models](#file-models).
+
+Because the container runs as root, mounted volumes need no ownership fixup and there is no `chown` oneshot. No StartOS-managed environment variables are set; everything is driven by the generated config file.
 
 ## Volume and Data Layout
 
-Two volumes, deliberately split so the user's files stay separate from server state.
+Two volumes, split so the user's files stay separate from server state.
 
-| Volume | Mount | Contents |
-| --- | --- | --- |
-| `data` | `/w` | The user's files — the single tree copyparty serves |
-| `config` | `/cfg` | Generated config, password/filekey salts, sessions, and the search index |
+| Volume   | Mount Point | Purpose                                                            |
+| -------- | ----------- | ------------------------------------------------------------------ |
+| `data`   | `/w`        | The user's files — the single tree copyparty serves                |
+| `config` | `/cfg`      | Generated config, salts, sessions, the search index and thumbnails |
 
-`/cfg` is also `XDG_CONFIG_HOME` in the image, so copyparty's runtime state lands under `/cfg/copyparty/`. The config sets `hist: /cfg/hists/`, which moves the per-volume index and thumbnail cache off the data volume; without it copyparty creates a `.hist` directory at the root of `/w`, in among the user's files.
+`/cfg` is also `XDG_CONFIG_HOME` in the image, so copyparty's own runtime state lands under `/cfg/copyparty/` — the session database and the `ah-salt.txt`, `fk-salt.txt` and `dk-salt.txt` files that make stored passwords and shared file links reproducible across restarts.
+
+The config sets `hist: /cfg/hists/`, which moves the search index and thumbnail cache off the data volume. Upstream's default puts them in a `.hist` directory at the root of each volume, which here would mean server state sitting in among the user's own files.
+
+The config also sets `df: 4`, reserving 4 GiB on the data volume; uploads are refused below that. Upstream reserves nothing.
 
 ## File Models
 
-One model, `startos/fileModels/copyparty.conf.ts`, bound to `/cfg/00-startos.conf`.
+One model, bound to `/cfg/00-startos.conf`, and every value in it except two is fixed.
 
-copyparty's config is a bespoke indented format — not YAML, despite the modeline upstream puts in its examples — so the model is a `FileHelper.raw` with an explicit renderer and parser. It exposes exactly two fields, `adminPassword` and `publicRead`; everything else in the rendered file is fixed.
+| File              | Format                               | Modelled               | Written by                |
+| ----------------- | ------------------------------------ | ---------------------- | ------------------------- |
+| `00-startos.conf` | copyparty's own indented text format | Yes — `FileHelper.raw` | Install, and both actions |
 
-The `00-` prefix is load-bearing. The image's bootstrap ends in `% /cfg`, which includes every `*.conf` in that directory in alphabetical order, so a user can drop a `99-custom.conf` beside this one to add settings the package does not expose, and it will not be overwritten.
+copyparty's config is a bespoke format, not YAML, despite the modeline upstream puts in its examples — so the model is a `FileHelper.raw` with a hand-written renderer and parser rather than a schema over a standard encoding.
+
+**Enforced** — rewritten whenever the package writes the file: the global block (`http-only`, `e2dsa`, `e2ts`, `ansi`, `name`, `hist`, `df`) and the single `/` volume pointing at `/w`. A hand edit to any of them is discarded on the next action.
+
+**Yours:** the admin password, through Set Admin Password, and anonymous read, through Public Access. The password is stored in this file in cleartext — copyparty hashes account passwords only when `--ah-alg` is set, and the package leaves it unset — so the file is as sensitive as the credential, and rotating it means re-running the action rather than editing the file.
+
+The `00-` prefix is load-bearing. Because the image's bootstrap includes every `*.conf` in `/cfg` alphabetically, a later filename such as `99-custom.conf` is loaded after this one and is never overwritten, which is how a user adds settings the package does not expose. Two properties of the format bite there and are both reported in the service log at startup: an inline comment needs _two_ spaces before its `#`, and an account with no matching entry in an `accs:` block silently has guest-level access rather than none.
 
 ## Dependencies
 
@@ -73,72 +88,90 @@ None.
 
 ## Network Access and Interfaces
 
-A single HTTP interface. copyparty serves its web UI and WebDAV on the same port, so both reach the user over the one address StartOS assigns.
+One interface. copyparty serves its web UI and WebDAV from the same port, so both reach the user over the one address StartOS assigns.
 
-| Interface | Type | Port |
-| --- | --- | --- |
-| `ui` | ui | 3923 |
+| Interface | Id   | Type | Port | Description                                      |
+| --------- | ---- | ---- | ---- | ------------------------------------------------ |
+| Web UI    | `ui` | ui   | 3923 | The copyparty web interface, also serving WebDAV |
 
-The config sets `http-only`. TLS termination is StartOS's job, and leaving it on would make copyparty generate and serve its own self-signed certificate.
+The port is bound on the `main` MultiHost and is not masked. The config sets `http-only`: TLS termination is StartOS's job, and leaving it on would make copyparty generate and serve its own self-signed certificate.
 
 ## Installation and First-Run Flow
 
-On install the package seeds `/cfg/00-startos.conf` with no account defined, then raises a critical task to set the admin password. Because the task is critical, the service cannot start until it is done, and an unconfigured copyparty is fail-closed in any case: with a config file present but no accounts, nobody — including anonymous visitors — has any permission.
+There is no first-run screen, and no account exists until you create one.
 
-Running **Set Admin Password** generates the credential, writes it into the config, and clears the task. `main.ts` reads the config with `.const(effects)`, so later changes to the password or the public-access toggle restart the service automatically and take effect without user intervention.
+1. Install writes `/cfg/00-startos.conf` with an empty `[accounts]` block.
+2. A `critical` task is raised pointing at Set Admin Password.
+3. Running that action generates the credential, writes it into the config, and clears the task.
+
+`critical` blocks the service from starting, so the window in which copyparty has no account is one in which it is not serving either. It is fail-closed in any case: with a config present and no accounts defined, nobody — including anonymous visitors — has any permission.
+
+`main.ts` reads the config reactively, so both actions take effect on their own. Writing either value restarts the service; there is nothing to apply by hand.
 
 ## Actions
 
-Two, matching the two decisions a user actually has to make.
+Two actions, both user-facing, matching the two decisions the package leaves open.
 
-| Action | When to run | Effect |
-| --- | --- | --- |
-| `set-admin-password` | At install, or to rotate the credential | Generates a new random password and writes it to the config. Repeat-safe; the previous password stops working immediately. |
-| `set-public-access` | Any time | Toggles anonymous read. Cheap, repeat-safe, and reversible. |
+### Set Admin Password
 
-`set-public-access` maps one boolean onto copyparty's per-volume ACL model: off leaves only `A: admin`, on adds `r: *`. copyparty has no global public switch, so this mapping is the package's own.
+Generates a new random password for the `admin` account. Run it when the install task prompts, and any time you need to rotate the credential.
+
+- **What it changes:** the `[accounts]` block of `/cfg/00-startos.conf`.
+- **Availability:** any status.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** safe to re-run; the previous password stops working immediately and open sessions on other devices are ended.
+- **Outputs:** the username and the new password, the password masked and copyable, shown once.
+
+### Public Access
+
+Turns anonymous read on or off. Off, only the admin account can reach anything; on, anyone who can reach the address may browse and download without signing in. Uploading, renaming and deleting always require the admin password.
+
+- **What it changes:** the `accs:` block of the `/` volume — `A: admin` alone when off, plus `r: *` when on.
+- **Availability:** any status.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent and reversible; the form is pre-filled with the current value.
+
+copyparty has no global public switch, so this one boolean is the package's own mapping onto its per-volume ACL model.
 
 ## Tasks
 
-| Task | Severity | Raised when |
-| --- | --- | --- |
-| `set-admin-password` | critical | The config has no admin password |
+One task, raised at install, and it blocks the service until you clear it.
+
+| Task               | Severity   | Raised when                          | Cleared when    |
+| ------------------ | ---------- | ------------------------------------ | --------------- |
+| Set Admin Password | `critical` | The config defines no admin password | The action runs |
+
+The condition is re-evaluated on every init, so the task returns if the password is ever removed from the config by hand.
 
 ## Health Checks
 
-The `primary` daemon's `ready` check requests `GET /` and expects 200.
+One check, on the only daemon.
 
-That path is chosen deliberately. copyparty answers `/` with a login splash at 200 whether or not the caller is authenticated and whether or not public access is on, but returns 500 when its docker failsafe has tripped — so the check distinguishes "serving" from "started but refusing to serve". `/?h` and `/?hc` bypass that failsafe and would report healthy on a broken config. Deeper paths return 401 or 403 to unauthenticated callers and are not usable as health checks.
+| Check     | Displayed       | Method                                  |
+| --------- | --------------- | --------------------------------------- |
+| `primary` | "Web Interface" | `GET /` on the local port, 2xx required |
+
+The status code carries the diagnosis, which is why the check asserts one rather than merely reaching the port. copyparty answers `/` with a login splash at 200 whether or not the caller is authenticated and whether or not public access is on, but returns **500** when it finds no `.conf` file in `/cfg` at all and trips its failsafe, denying every request rather than defaulting to open. A failing check therefore means the process is down, or up and refusing to serve — and the second case is recoverable by re-running Set Admin Password, which rewrites the config.
+
+`/?h` and `/?hc` are deliberately not used: both answer 200 even with the failsafe tripped, so a check against either reports healthy on a service that is serving nothing.
 
 ## Backups and Restore
 
-Both volumes are backed up by direct volume sync. There is no database to dump — copyparty's state is plain files.
+Both volumes are copied wholesale — there is no database to dump, since copyparty's state is plain files.
 
-`config` is backed up with `hists/*/th` excluded: that subtree is the thumbnail cache and is regenerated on demand. The search index under `hists/` **is** included, because rebuilding it means a full rescan of the data volume.
+- **Included:** every file on `data`, the generated config, the salts and session database under `/cfg/copyparty/`, and the search index under `/cfg/hists/`.
+- **Excluded:** `hists/*/th`, the thumbnail cache, which is regenerated on demand. The search index is kept, because rebuilding it means a full rescan of the data volume.
+- **Restore:** complete. The salts matter more than their size suggests — `ah-salt.txt` is what keeps stored passwords valid and `fk-salt.txt` what keeps previously shared file links resolving, so a restore without them would invalidate both.
 
-Two files in `/cfg/copyparty/` matter more than their size suggests: `ah-salt.txt` and `fk-salt.txt`. Losing the first invalidates every hashed password; losing the second breaks every previously shared file link. Both are inside the backup set.
+Note the size implication: `data` is the whole file tree, so the backup is as large as what you have stored.
 
 ## Limitations and Differences
 
-- **Only the web UI and WebDAV are exposed.** copyparty can also speak FTP, SFTP, TFTP and SMB. All are off. FTP needs a passive port range and NAT-aware configuration, SMB requires a dependency absent from every published image and is described by upstream as unsafe, and TFTP wants a privileged UDP port.
-- **Zeroconf (mDNS/SSDP) is off** — it depends on LAN multicast, which does not usefully cross the StartOS container bridge.
-- **The upstream version check is not enabled.** StartOS owns updates.
-- **User management is config-only.** The package provisions a single `admin` account. copyparty has no in-app user administration, so additional accounts mean adding a `99-custom.conf`.
-- **Password hashing is not enabled.** The admin password is stored in the config file on the service's own encrypted volume. Upstream's argon2 defaults cost roughly 256 MiB of RAM per login attempt, which is a poor trade on small hardware for a credential StartOS generates and stores anyway.
-
-## Troubleshooting
-
-**The web UI returns a 500 and the health check fails.** copyparty found no `.conf` file in `/cfg` and tripped its failsafe, which denies all access rather than defaulting to open. Re-running `set-admin-password` rewrites the config.
-
-**Uploads fail while browsing works.** copyparty strips write access from volumes it believes are not backed by real storage, logging `write-access was removed`. This should not happen with a normal StartOS volume; if it does, the data volume did not mount.
-
-**A hand-written `99-custom.conf` had no effect.** Inline comments need two spaces before the `#`, and an account with no matching entry in an `accs:` block has guest-level access. Both are logged at startup — check the service logs.
-
-To inspect the running container: `start-cli package attach copyparty -n copyparty-sub -- <cmd>`.
-
-## Contributing
-
-Build and development workflow follow the StartOS packaging guide: <https://docs.start9.com/packaging>. Keep `README.md`, `instructions.md`, and `AGENTS.md` in sync with any change to user-visible behavior or package structure.
+1. **Only the HTTP interface is published.** copyparty can also speak FTP, SFTP, TFTP and SMB. The package declares no interface for any of them, so enabling one in a custom config yields a port nothing routes to.
+2. **Zeroconf discovery cannot work here.** mDNS and SSDP depend on LAN multicast, which does not usefully cross the StartOS container bridge.
+3. **Uploads are refused when the data volume has less than 4 GiB free**, and are briefly refused at every startup while the index scan runs. Both come from settings the package turns on (`df`, `-e2dsa`/`-e2ts`) that upstream leaves off.
+4. **The `admin` account is the only one the package manages.** Accounts added through a custom config are outside its reach: it will not create, rotate or report on them.
+5. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---
 
@@ -147,22 +180,25 @@ Build and development workflow follow the StartOS packaging guide: <https://docs
 ```yaml
 package_id: copyparty
 image: copyparty/ac
-architectures: [x86_64, aarch64]
-subcontainers: [copyparty-sub]
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - copyparty-sub # the running daemon
 volumes:
   data: /w
   config: /cfg
 file_models:
   - /cfg/00-startos.conf
 startos_managed_env_vars: []
-dependencies: none
+dependencies: []
 interfaces:
-  ui: { type: ui, port: 3923 }
+  ui: { type: ui, port: 3923 } # web UI and WebDAV on the same port
 actions:
   - set-admin-password
   - set-public-access
 tasks:
   - { action: set-admin-password, severity: critical }
 health_checks:
-  - primary
+  - primary # the daemon's ready check, displayed "Web Interface"
 ```
