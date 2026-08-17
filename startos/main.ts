@@ -22,11 +22,24 @@ export const main = sdk.setupMain(async ({ effects }) => {
     exec: { command: sdk.useEntrypoint() },
     ready: {
       display: i18n('Web Interface'),
-      fn: () =>
-        sdk.healthCheck.checkWebUrl(effects, `http://localhost:${uiPort}/`, {
-          successMessage: i18n('The web interface is ready'),
-          errorMessage: i18n('The web interface is not ready'),
-        }),
+      // The status code is the signal: copyparty answers / at 200 signed in or
+      // not, but 500 once its no-config failsafe trips, so a status-blind check
+      // reads a service refusing every request as serving.
+      fn: async () => {
+        const ok = await fetch(`http://localhost:${uiPort}/`)
+          .then((res) => res.ok)
+          .catch(() => false)
+
+        return ok
+          ? {
+              result: 'success' as const,
+              message: i18n('The web interface is ready'),
+            }
+          : {
+              result: 'failure' as const,
+              message: i18n('The web interface is not ready'),
+            }
+      },
     },
     requires: [],
   })
