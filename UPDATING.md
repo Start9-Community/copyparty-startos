@@ -25,6 +25,6 @@ Expect `amd64 linux` and `arm64 linux`. Images are pushed by hand from `scripts/
 
 Edit `startos/manifest/index.ts` and set `dockerVersion` to the new version, then bump `version` and rewrite `releaseNotes` in `startos/versions/current.ts`.
 
-The `ac` edition is the one to track. Upstream also publishes `min`, `im`, `iv`, and `dj`; `ac` is upstream's recommended general-purpose build and the only one that carries both target architectures along with FFmpeg.
+The `ac` edition is the one to track. Upstream also publishes `min`, `im`, `iv`, and `dj`, all on the same architectures; `ac` is the recommended general-purpose build, and upstream describes what `iv` and `dj` add over it as rarely useful.
 
 Read the [changelog](https://github.com/9001/copyparty/blob/hovudstraum/docs/changelog.md) for the range being crossed. Pay particular attention to changes in the config-file parser or the permission characters, since `startos/fileModels/copyparty.conf.ts` renders that format directly.

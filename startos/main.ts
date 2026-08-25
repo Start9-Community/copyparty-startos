@@ -26,7 +26,9 @@ export const main = sdk.setupMain(async ({ effects }) => {
       // not, but 500 once its no-config failsafe trips, so a status-blind check
       // reads a service refusing every request as serving.
       fn: async () => {
-        const ok = await fetch(`http://localhost:${uiPort}/`)
+        const ok = await fetch(`http://localhost:${uiPort}/`, {
+          signal: AbortSignal.timeout(5_000),
+        })
           .then((res) => res.ok)
           .catch(() => false)
 

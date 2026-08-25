@@ -7,16 +7,17 @@
 
 ## What you get on StartOS
 
-copyparty gives you a private place to put files and get them back from any device. It is built for large transfers: uploads are split into chunks and resume where they left off, so a big video that dies halfway through picks up rather than starting over, and there is no size limit.
+One address, the **Web UI**, serves both the browser interface and WebDAV, so anything that can mount a network drive reaches the same files as your browser does.
 
-Your files live in a single folder on your server. copyparty indexes them so search is instant, makes thumbnails for images and video, and plays music and video right in the browser. You can also connect to it as a network drive from Windows, macOS, or Linux — no app to install.
+Everything you upload lands in one folder on your server, and StartOS backs it up along with copyparty's search index and the salts that keep your password and any links you have shared working after a restore. Because that folder is the backup, it is as large as what you store — plan the drive you back up to accordingly.
+
+Two settings are yours to make: the admin password, and whether visitors can browse and download without signing in. Everything else copyparty can be told to do is configured for you.
 
 ## Getting set up
 
-1. Install copyparty. StartOS will show a task telling you to set an admin password — the service will not start until you do.
+1. StartOS shows a task asking you to set an admin password. copyparty will not start until you do.
 2. Run the **Set Admin Password** action. It generates a strong password and shows it to you once. **Copy it into your password manager now.** You can re-run the action later if you lose it, but that replaces the old password.
-3. Start copyparty and open the **Web UI**.
-4. Sign in. copyparty asks only for the password — there is no username field until you add a second account.
+3. Start copyparty, then open the **Web UI** and sign in. It asks only for the password — there is no username field until you add a second account.
 
 ## Using copyparty
 
@@ -44,4 +45,4 @@ Sign in with `admin` and your admin password.
 
 ### Adding more accounts
 
-The package sets up one `admin` account. If you want more, add a file ending in `.conf` to copyparty's config folder — for example `99-custom.conf` — and copyparty will load it alongside the one StartOS manages. The [upstream accounts documentation](https://github.com/9001/copyparty#accounts-and-volumes) covers the syntax. Don't edit `00-startos.conf` itself; StartOS overwrites it whenever you run an action.
+The package sets up one `admin` account, and that is the only one it manages. Adding a second is possible but manual: it means putting another file ending in `.conf` next to the one StartOS writes, in copyparty's config folder on the server, which you reach over SSH rather than from the StartOS interface. Name it so it sorts after `00-startos.conf` — `99-custom.conf`, say — and copyparty loads it alongside. Leave `00-startos.conf` itself alone; StartOS rewrites it. The [upstream accounts documentation](https://github.com/9001/copyparty#accounts-and-volumes) covers the syntax.

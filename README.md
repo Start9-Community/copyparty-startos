@@ -45,7 +45,7 @@ The upstream image is used unmodified, with its own entrypoint, and one subconta
 | Runs as       | root — the image declares no `USER`                                |
 | Subcontainer  | `copyparty-sub` — the `primary` daemon, and the one to `attach` to |
 
-The `ac` edition bundles FFmpeg, Pillow and Mutagen, which is what makes media thumbnails, audio transcoding and tag indexing work.
+The `ac` edition bundles FFmpeg and Pillow, which is what makes image, video and audio thumbnails, audio transcoding and media-tag indexing work. The image ships no Mutagen despite upstream's edition table listing it, so tag reading falls back to FFprobe.
 
 The entrypoint applies a bootstrap config baked into the image — `chdir: /w` and `no-crt` — and ends with `% /cfg`, which includes every `*.conf` file in that directory in alphabetical order. That include is what loads the package's own config, and it is also the escape hatch described under [File Models](#file-models).
 
@@ -62,7 +62,7 @@ Two volumes, split so the user's files stay separate from server state.
 
 `/cfg` is also `XDG_CONFIG_HOME` in the image, so copyparty's own runtime state lands under `/cfg/copyparty/` — the session database and the `ah-salt.txt`, `fk-salt.txt` and `dk-salt.txt` files that make stored passwords and shared file links reproducible across restarts.
 
-The config sets `hist: /cfg/hists/`, which moves the search index and thumbnail cache off the data volume. Upstream's default puts them in a `.hist` directory at the root of each volume, which here would mean server state sitting in among the user's own files.
+The config sets `hist: /cfg/hists/`, which moves the search index and the thumbnail and transcode caches off the data volume. Upstream's default puts them in a `.hist` directory at the root of each volume, which here would mean server state sitting in among the user's own files.
 
 The config also sets `df: 4`, reserving 4 GiB on the data volume; uploads are refused below that. Upstream reserves nothing.
 
@@ -159,8 +159,8 @@ The status code carries the diagnosis, which is why the check asserts one rather
 
 Both volumes are copied wholesale — there is no database to dump, since copyparty's state is plain files.
 
-- **Included:** every file on `data`, the generated config, the salts and session database under `/cfg/copyparty/`, and the search index under `/cfg/hists/`.
-- **Excluded:** `hists/*/th`, the thumbnail cache, which is regenerated on demand. The search index is kept, because rebuilding it means a full rescan of the data volume.
+- **Included:** every file on `data`, the generated config, the salts and session database under `/cfg/copyparty/`, and the search index under `/cfg/hists/*/up2k.db`.
+- **Excluded:** `hists/*/th` and `hists/*/ac`, the thumbnail and audio-transcode caches, both regenerated on demand. The search index beside them is kept, because rebuilding it means a full rescan of the data volume.
 - **Restore:** complete. The salts matter more than their size suggests — `ah-salt.txt` is what keeps stored passwords valid and `fk-salt.txt` what keeps previously shared file links resolving, so a restore without them would invalidate both.
 
 Note the size implication: `data` is the whole file tree, so the backup is as large as what you have stored.
