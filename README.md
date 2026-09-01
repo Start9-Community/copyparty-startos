@@ -76,7 +76,7 @@ One model, bound to `/cfg/00-startos.conf`, and every value in it except two is 
 
 copyparty's config is a bespoke format, not YAML, despite the modeline upstream puts in its examples — so the model is a `FileHelper.raw` with a hand-written renderer and parser rather than a schema over a standard encoding.
 
-**Enforced** — rewritten whenever the package writes the file: the global block (`http-only`, `e2dsa`, `e2ts`, `ansi`, `name`, `hist`, `df`) and the single `/` volume pointing at `/w`. A hand edit to any of them is discarded on the next action.
+**Enforced** — rewritten whenever the package writes the file: the global block (`http-only`, `xff-src`, `e2dsa`, `e2ts`, `ansi`, `name`, `hist`, `df`) and the single `/` volume pointing at `/w`. A hand edit to any of them is discarded on the next action.
 
 **Yours:** the admin password, through Set Admin Password, and anonymous read, through Public Access. The password is stored in this file in cleartext — copyparty hashes account passwords only when `--ah-alg` is set, and the package leaves it unset — so the file is as sensitive as the credential, and rotating it means re-running the action rather than editing the file.
 
@@ -95,6 +95,8 @@ One interface. copyparty serves its web UI and WebDAV from the same port, so bot
 | Web UI    | `ui` | ui   | 3923 | The copyparty web interface, also serving WebDAV |
 
 The port is bound on the `main` MultiHost and is not masked. The config sets `http-only`: TLS termination is StartOS's job, and leaving it on would make copyparty generate and serve its own self-signed certificate.
+
+StartOS adds forwarded host, protocol and client-address headers when it proxies the interface. The generated config trusts those headers only from loopback and the StartOS bridge gateway. This lets copyparty recognize the browser-facing HTTPS origin when checking login requests without trusting headers supplied by arbitrary LAN clients.
 
 ## Installation and First-Run Flow
 
@@ -119,8 +121,8 @@ Generates a new random password for the `admin` account. Run it when the install
 - **What it changes:** the `[accounts]` block of `/cfg/00-startos.conf`.
 - **Availability:** any status.
 - **Cost:** seconds, then a restart.
-- **Repeat safety:** safe to re-run; the previous password stops working immediately and open sessions on other devices are ended.
-- **Outputs:** the username and the new password, the password masked and copyable, shown once.
+- **Repeat safety:** safe to re-run; the previous password stops working after copyparty restarts. Existing signed-in browser sessions remain active.
+- **Outputs:** the new password, masked, copyable and shown once. The same password works for the Web UI and WebDAV; WebDAV's fixed `admin` username is documented in `instructions.md`.
 
 ### Public Access
 

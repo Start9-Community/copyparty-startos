@@ -14,9 +14,8 @@ const dict = {
   // actions/setAdminPassword.ts
   'Set Admin Password': 6,
   'Generate a new random password for the copyparty admin account. Replaces any existing password.': 7,
-  'Admin Credentials': 8,
-  'Use these credentials to sign in to copyparty. Write them down or save them to a password manager.': 9,
-  Username: 10,
+  'Admin Password': 8,
+  'The Web UI and WebDAV use the same password. Save it now; running this action again replaces it.': 9,
   Password: 11,
 
   // actions/setPublicAccess.ts
