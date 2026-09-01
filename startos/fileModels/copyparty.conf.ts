@@ -2,7 +2,7 @@ import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 import { adminUsername, configPath, dataPath } from '../utils'
 
-const shape = z.object({
+const shape = z.looseObject({
   adminPassword: z.string().nullable().catch(null),
   publicRead: z.boolean().catch(false),
 })
@@ -22,6 +22,7 @@ function toFile({ adminPassword, publicRead }: Config): string {
 
 [global]
   http-only
+  xff-src: 127.0.0.0/8, ::1/128, 10.0.3.1/32, fd00:3::1/128
   e2dsa
   e2ts
   ansi

@@ -17,7 +17,7 @@ Two settings are yours to make: the admin password, and whether visitors can bro
 
 1. StartOS shows a task asking you to set an admin password. copyparty will not start until you do.
 2. Run the **Set Admin Password** action. It generates a strong password and shows it to you once. **Copy it into your password manager now.** You can re-run the action later if you lose it, but that replaces the old password.
-3. Start copyparty, then open the **Web UI** and sign in. It asks only for the password — there is no username field until you add a second account.
+3. Start copyparty, then open the **Web UI** and sign in. The Web UI asks only for the password.
 
 ## Using copyparty
 
@@ -39,7 +39,7 @@ Sign in with `admin` and your admin password.
 
 ### Actions
 
-**Set Admin Password** — generates a new random password. Use it the first time, and any time you want to rotate the credential. The old password stops working immediately, and anyone signed in on another device will have to sign in again.
+**Set Admin Password** — generates a new random password. Use it the first time, and any time you want to rotate the credential. The old password stops working after copyparty restarts. Existing signed-in browser sessions remain active.
 
 **Public Access** — off by default. Turn it on and anyone who can reach your copyparty address can browse and download your files without signing in. Uploading, renaming, and deleting still require the admin password. Turn it on if you want to hand out links to people; leave it off if this is only for you.
 
