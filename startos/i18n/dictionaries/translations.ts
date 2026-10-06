@@ -18,6 +18,7 @@ export default {
     14: 'Permitir descargas públicas',
     15: 'Cuando está habilitado, cualquiera que pueda acceder a copyparty puede explorar y descargar tus archivos sin iniciar sesión. Subir, renombrar y eliminar siempre requieren la contraseña de administrador.',
     16: 'Establece la contraseña de administrador antes de iniciar sesión en copyparty',
+    17: 'Reemplaza la contraseña de administrador actual. La contraseña anterior deja de funcionar en la interfaz web y en WebDAV cuando copyparty se reinicia.',
   },
   de_DE: {
     0: 'copyparty wird gestartet',
@@ -36,6 +37,7 @@ export default {
     14: 'Öffentliche Downloads erlauben',
     15: 'Wenn aktiviert, kann jeder, der copyparty erreicht, Ihre Dateien ohne Anmeldung durchsuchen und herunterladen. Hochladen, Umbenennen und Löschen erfordern immer das Administrator-Passwort.',
     16: 'Legen Sie das Administrator-Passwort fest, bevor Sie sich bei copyparty anmelden',
+    17: 'Ersetzt das aktuelle Administrator-Passwort. Das alte Passwort funktioniert für die Weboberfläche und WebDAV nicht mehr, sobald copyparty neu startet.',
   },
   pl_PL: {
     0: 'Uruchamianie copyparty',
@@ -54,6 +56,7 @@ export default {
     14: 'Zezwól na publiczne pobieranie',
     15: 'Po włączeniu każdy, kto ma dostęp do copyparty, może przeglądać i pobierać Twoje pliki bez logowania. Wysyłanie, zmiana nazwy i usuwanie zawsze wymagają hasła administratora.',
     16: 'Ustaw hasło administratora przed zalogowaniem się do copyparty',
+    17: 'Zastępuje obecne hasło administratora. Stare hasło przestaje działać w interfejsie webowym i WebDAV po ponownym uruchomieniu copyparty.',
   },
   fr_FR: {
     0: 'Démarrage de copyparty',
@@ -72,5 +75,6 @@ export default {
     14: 'Autoriser les téléchargements publics',
     15: 'Lorsque cette option est activée, toute personne pouvant joindre copyparty peut parcourir et télécharger vos fichiers sans se connecter. L’envoi, le renommage et la suppression exigent toujours le mot de passe administrateur.',
     16: 'Définissez le mot de passe administrateur avant de vous connecter à copyparty',
+    17: 'Remplace le mot de passe administrateur actuel. L’ancien mot de passe cesse de fonctionner pour l’interface web et WebDAV dès que copyparty redémarre.',
   },
 } satisfies Record<string, LangDict>

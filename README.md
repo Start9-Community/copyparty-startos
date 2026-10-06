@@ -120,6 +120,7 @@ Generates a new random password for the `admin` account. Run it when the install
 
 - **What it changes:** the `[accounts]` block of `/cfg/00-startos.conf`.
 - **Availability:** any status.
+- **Confirmation:** none on the first run; once a password exists, StartOS asks for confirmation before replacing it.
 - **Cost:** seconds, then a restart.
 - **Repeat safety:** safe to re-run; the previous password stops working after copyparty restarts. Existing signed-in browser sessions remain active.
 - **Outputs:** the new password, masked, copyable and shown once. The same password works for the Web UI and WebDAV; WebDAV's fixed `admin` username is documented in `instructions.md`.

@@ -18,7 +18,10 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
 **Fix a defect you spot rather than reporting it** — you have the package open and the
 context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
@@ -31,5 +34,5 @@ verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **The image runs as root** (it declares no `USER`), so mounted volumes need no ownership fixup and there is no `chown` oneshot. If you ever switch to a non-root user you must add one — copyparty degrades quietly rather than failing, writing salts and filekeys to the ephemeral overlay so they reset on every restart.
-- **copyparty logs its full volume and permission table at startup.** That is the fastest way to confirm the generated config parsed as intended, and the first thing to read after changing the renderer.
+- **Keep the image running as root, or add a `chown` oneshot for the mounted volumes.** Under a non-root user copyparty does not fail: it writes its salts and filekeys to the ephemeral overlay, where they reset on every restart.
+- **After changing the renderer in `startos/fileModels/copyparty.conf.ts`, read copyparty's startup log** — it prints the volume and permission table it parsed from the generated config.
