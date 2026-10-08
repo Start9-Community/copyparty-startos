@@ -39,7 +39,7 @@ Sign in with `admin` and your admin password.
 
 ### Actions
 
-**Set Admin Password** — generates a new random password. Use it the first time, and any time you want to rotate the credential. The old password stops working after copyparty restarts. Existing signed-in browser sessions remain active.
+**Set Admin Password** — generates a new random password. Use it the first time, and any time you want to rotate the credential. Once a password exists, StartOS asks you to confirm before replacing it. The old password stops working after copyparty restarts. Existing signed-in browser sessions remain active.
 
 **Public Access** — off by default. Turn it on and anyone who can reach your copyparty address can browse and download your files without signing in. Uploading, renaming, and deleting still require the admin password. Turn it on if you want to hand out links to people; leave it off if this is only for you.
 
