@@ -25,6 +25,12 @@ const dict = {
   'Allow Public Downloads': 14,
   'When enabled, anyone who can reach copyparty may browse and download your files without signing in. Uploading, renaming, and deleting always require the admin password.': 15,
 
+  // actions/setSharing.ts
+  'Share Links': 18,
+  'Choose whether you can create share links to individual files and folders': 19,
+  'Allow Share Links': 20,
+  'When enabled, the admin account can create links to chosen files or folders from the share button in the web interface, each with an optional password and expiry. Anyone with a link can open it without signing in.': 21,
+
   // init/watchCredentials.ts
   'Set the admin password before signing in to copyparty': 16,
 } as const
