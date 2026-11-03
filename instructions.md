@@ -45,10 +45,12 @@ Sign in with `admin` and your admin password.
 
 **Share Links** — off by default. Turn it on to share particular files or folders without opening up everything: in the web interface, select what you want (or open a folder) and click **share** at the bottom right. Each link can have a password, an expiry, and permission for visitors to upload, and anyone with the link can open it without signing in. Turning the action off disables every link; turning it back on restores them.
 
+If you previously enabled sharing in a custom `.conf` file, remove its `shr:` option before using **Share Links**. Otherwise sharing stays enabled even when the action is off, and the form does not show that custom setting.
+
 ### Custom settings and more accounts
 
 The package sets up one `admin` account and a handful of settings, and those are all it manages. Anything else copyparty can do is possible but manual: put another file ending in `.conf` next to the one StartOS writes, in copyparty's config folder on the server, which you reach over SSH rather than from the StartOS interface. Name it so it sorts after `00-startos.conf` — `99-custom.conf`, say — and copyparty loads it alongside. Leave `00-startos.conf` itself alone; StartOS rewrites it.
 
-Your file adds to the package's; it can't repeat or change anything already there. In particular, don't copy `00-startos.conf` as a starting point: copyparty refuses to start when two files both define the `[/]` folder. That also means an account you add can't be given access to your main files — give it a folder of its own instead, such as `[/bob]` stored at `/w/bob`. Options in a `[global]` section are fine to add.
+Your file can add folders, but it can't redefine a folder the package already declares. In particular, don't copy `00-startos.conf` as a starting point: copyparty refuses to start when two files both define the `[/]` folder. That also means an account you add can't be given access to your main files — give it a folder of its own instead, such as `[/bob]` stored at `/w/bob`. Options in a `[global]` section merge with the package's settings.
 
 The [upstream accounts documentation](https://github.com/9001/copyparty#accounts-and-volumes) covers the syntax. If copyparty won't start after a change, its log names the line it rejected.

@@ -80,7 +80,7 @@ copyparty's config is a bespoke format, not YAML, despite the modeline upstream 
 
 **Yours:** the admin password, through Set Admin Password, anonymous read, through Public Access, and share links (`shr`), through Share Links. The password is stored in this file in cleartext — copyparty hashes account passwords only when `--ah-alg` is set, and the package leaves it unset — so the file is as sensitive as the credential, and rotating it means re-running the action rather than editing the file.
 
-The `00-` prefix is load-bearing. Because the image's bootstrap includes every `*.conf` in `/cfg` alphabetically, a later filename such as `99-custom.conf` is loaded after this one and is never overwritten, which is how a user adds settings the package does not expose. It can only add: copyparty rejects a volume mounted twice (`multiple filesystem-paths mounted at [/]`, and the service won't start), so a custom file can't redeclare `[/]` or widen its `accs:`. An extra account gets access only through a volume of its own, while `[global]` options merge across files. Two properties of the format bite there and are both reported in the service log at startup: an inline comment needs _two_ spaces before its `#`, and an account with no matching entry in an `accs:` block silently has guest-level access rather than none.
+The `00-` prefix is load-bearing. Because the image's bootstrap includes every `*.conf` in `/cfg` alphabetically, a later filename such as `99-custom.conf` is loaded after this one and is never overwritten, which is how a user adds settings the package does not expose. Volumes can only be added: copyparty rejects a volume mounted twice (`multiple filesystem-paths mounted at [/]`, and the service won't start), so a custom file can't redeclare `[/]` or widen its `accs:`. An extra account gets access only through a volume of its own, while `[global]` options merge across files. Two properties of the format bite there and are both reported in the service log at startup: an inline comment needs _two_ spaces before its `#`, and an account with no matching entry in an `accs:` block silently has guest-level access rather than none.
 
 ## Dependencies
 
@@ -141,6 +141,7 @@ copyparty has no global public switch, so this one boolean is the package's own 
 Turns copyparty's share links on or off. On, a signed-in user can create a link to chosen files or folders from the web UI's **share** button, with an optional password, expiry and upload permission; anyone with the link opens it without signing in. Off, the button is gone and existing links stop resolving.
 
 - **What it changes:** `shr: /shares` in the `[global]` block, present when on. copyparty serves every share under that virtual folder and keeps them in `/cfg/copyparty/shares.db`, on the backed-up config volume, so links survive turning the action off and on again and a restore.
+- **Custom config:** remove any `shr:` option from other `.conf` files before using this action. It manages only `00-startos.conf`; a `shr:` option in a custom file keeps sharing enabled when the action is off and is not reflected in the form.
 - **Who can share:** copyparty's default `shr-who: auth`, any signed-in account — in practice `admin`, plus any account a custom config adds with access to a volume of its own.
 - **Availability:** any status.
 - **Cost:** seconds, then a restart.
@@ -210,6 +211,7 @@ interfaces:
 actions:
   - set-admin-password
   - set-public-access
+  - set-sharing
 tasks:
   - { action: set-admin-password, severity: critical }
 health_checks:
