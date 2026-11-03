@@ -5,6 +5,7 @@ import { adminUsername, configPath, dataPath } from '../utils'
 const shape = z.looseObject({
   adminPassword: z.string().nullable().catch(null),
   publicRead: z.boolean().catch(false),
+  sharing: z.boolean().catch(false),
 })
 
 type Config = z.infer<typeof shape>
@@ -13,7 +14,7 @@ type Config = z.infer<typeof shape>
 // upstream's examples is for editor highlighting only. The image includes every
 // *.conf in /cfg alphabetically; the 00- prefix reserves ordering for us and
 // leaves every later filename to the user, so never write to one they might pick.
-function toFile({ adminPassword, publicRead }: Config): string {
+function toFile({ adminPassword, publicRead, sharing }: Config): string {
   const accounts = adminPassword ? `  ${adminUsername}: ${adminPassword}\n` : ''
   const anonymous = publicRead ? '    r: *\n' : ''
 
@@ -21,7 +22,7 @@ function toFile({ adminPassword, publicRead }: Config): string {
 # To add your own settings, create another .conf file in this directory.
 
 [global]
-  http-only
+${sharing ? '  shr: /shares\n' : ''}  http-only
   xff-src: 127.0.0.0/8, ::1/128, 10.0.3.1/32, fd00:3::1/128
   e2dsa
   e2ts
@@ -47,6 +48,7 @@ function fromFile(raw: string): unknown {
   return {
     adminPassword: password ?? null,
     publicRead: /^\s*r:\s*\*\s*$/m.test(raw),
+    sharing: /^\s*shr:/m.test(raw),
   }
 }
 

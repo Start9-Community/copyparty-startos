@@ -9,7 +9,7 @@
 > upstream documentation is accurate and fully applicable — see the
 > Documentation section of `instructions.md` for links.
 
-[copyparty](https://github.com/9001/copyparty) is a file server with a browser UI, resumable chunked uploads, a media indexer, thumbnails and WebDAV, all from a single process. On StartOS its files and its server state live on separate volumes, the whole configuration is generated from two package-owned settings, and the single `admin` account is created by an action rather than by editing a config file.
+[copyparty](https://github.com/9001/copyparty) is a file server with a browser UI, resumable chunked uploads, a media indexer, thumbnails and WebDAV, all from a single process. On StartOS its files and its server state live on separate volumes, the whole configuration is generated from three package-owned settings, and the single `admin` account is created by an action rather than by editing a config file.
 
 - **Upstream repo:** <https://github.com/9001/copyparty>
 - **Wrapper repo:** <https://github.com/Start9-Community/copyparty-startos>
@@ -68,19 +68,19 @@ The config also sets `df: 4`, reserving 4 GiB on the data volume; uploads are re
 
 ## File Models
 
-One model, bound to `/cfg/00-startos.conf`, and every value in it except two is fixed.
+One model, bound to `/cfg/00-startos.conf`, and every value in it except three is fixed.
 
 | File              | Format                               | Modelled               | Written by                |
 | ----------------- | ------------------------------------ | ---------------------- | ------------------------- |
-| `00-startos.conf` | copyparty's own indented text format | Yes — `FileHelper.raw` | Install, and both actions |
+| `00-startos.conf` | copyparty's own indented text format | Yes — `FileHelper.raw` | Install, and every action |
 
 copyparty's config is a bespoke format, not YAML, despite the modeline upstream puts in its examples — so the model is a `FileHelper.raw` with a hand-written renderer and parser rather than a schema over a standard encoding.
 
 **Enforced** — rewritten whenever the package writes the file: the global block (`http-only`, `xff-src`, `e2dsa`, `e2ts`, `ansi`, `name`, `hist`, `df`) and the single `/` volume pointing at `/w`. A hand edit to any of them is discarded on the next action.
 
-**Yours:** the admin password, through Set Admin Password, and anonymous read, through Public Access. The password is stored in this file in cleartext — copyparty hashes account passwords only when `--ah-alg` is set, and the package leaves it unset — so the file is as sensitive as the credential, and rotating it means re-running the action rather than editing the file.
+**Yours:** the admin password, through Set Admin Password, anonymous read, through Public Access, and share links (`shr`), through Share Links. The password is stored in this file in cleartext — copyparty hashes account passwords only when `--ah-alg` is set, and the package leaves it unset — so the file is as sensitive as the credential, and rotating it means re-running the action rather than editing the file.
 
-The `00-` prefix is load-bearing. Because the image's bootstrap includes every `*.conf` in `/cfg` alphabetically, a later filename such as `99-custom.conf` is loaded after this one and is never overwritten, which is how a user adds settings the package does not expose. Two properties of the format bite there and are both reported in the service log at startup: an inline comment needs _two_ spaces before its `#`, and an account with no matching entry in an `accs:` block silently has guest-level access rather than none.
+The `00-` prefix is load-bearing. Because the image's bootstrap includes every `*.conf` in `/cfg` alphabetically, a later filename such as `99-custom.conf` is loaded after this one and is never overwritten, which is how a user adds settings the package does not expose. It can only add: copyparty rejects a volume mounted twice (`multiple filesystem-paths mounted at [/]`, and the service won't start), so a custom file can't redeclare `[/]` or widen its `accs:`. An extra account gets access only through a volume of its own, while `[global]` options merge across files. Two properties of the format bite there and are both reported in the service log at startup: an inline comment needs _two_ spaces before its `#`, and an account with no matching entry in an `accs:` block silently has guest-level access rather than none.
 
 ## Dependencies
 
@@ -108,11 +108,11 @@ There is no first-run screen, and no account exists until you create one.
 
 `critical` blocks the service from starting, so the window in which copyparty has no account is one in which it is not serving either. It is fail-closed in any case: with a config present and no accounts defined, nobody — including anonymous visitors — has any permission.
 
-`main.ts` reads the config reactively, so both actions take effect on their own. Writing either value restarts the service; there is nothing to apply by hand.
+`main.ts` reads the config reactively, so every action takes effect on its own. Writing any value restarts the service; there is nothing to apply by hand.
 
 ## Actions
 
-Two actions, both user-facing, matching the two decisions the package leaves open.
+Three actions, all user-facing, matching the three decisions the package leaves open.
 
 ### Set Admin Password
 
@@ -135,6 +135,16 @@ Turns anonymous read on or off. Off, only the admin account can reach anything; 
 - **Repeat safety:** idempotent and reversible; the form is pre-filled with the current value.
 
 copyparty has no global public switch, so this one boolean is the package's own mapping onto its per-volume ACL model.
+
+### Share Links
+
+Turns copyparty's share links on or off. On, a signed-in user can create a link to chosen files or folders from the web UI's **share** button, with an optional password, expiry and upload permission; anyone with the link opens it without signing in. Off, the button is gone and existing links stop resolving.
+
+- **What it changes:** `shr: /shares` in the `[global]` block, present when on. copyparty serves every share under that virtual folder and keeps them in `/cfg/copyparty/shares.db`, on the backed-up config volume, so links survive turning the action off and on again and a restore.
+- **Who can share:** copyparty's default `shr-who: auth`, any signed-in account — in practice `admin`, plus any account a custom config adds with access to a volume of its own.
+- **Availability:** any status.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent and reversible; the form is pre-filled with the current value. A hand-added `shr:` line in `00-startos.conf` reads as on.
 
 ## Tasks
 
@@ -173,7 +183,7 @@ Note the size implication: `data` is the whole file tree, so the backup is as la
 1. **Only the HTTP interface is published.** copyparty can also speak FTP, SFTP, TFTP and SMB. The package declares no interface for any of them, so enabling one in a custom config yields a port nothing routes to.
 2. **Zeroconf discovery cannot work here.** mDNS and SSDP depend on LAN multicast, which does not usefully cross the StartOS container bridge.
 3. **Uploads are refused when the data volume has less than 4 GiB free**, and are briefly refused at every startup while the index scan runs. Both come from settings the package turns on (`df`, `-e2dsa`/`-e2ts`) that upstream leaves off.
-4. **The `admin` account is the only one the package manages.** Accounts added through a custom config are outside its reach: it will not create, rotate or report on them.
+4. **The `admin` account is the only one the package manages.** Accounts added through a custom config are outside its reach: it will not create, rotate or report on them, and they can't be granted access to `[/]`, which only `00-startos.conf` declares.
 5. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---

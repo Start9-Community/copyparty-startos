@@ -19,6 +19,10 @@ export default {
     15: 'Cuando está habilitado, cualquiera que pueda acceder a copyparty puede explorar y descargar tus archivos sin iniciar sesión. Subir, renombrar y eliminar siempre requieren la contraseña de administrador.',
     16: 'Establece la contraseña de administrador antes de iniciar sesión en copyparty',
     17: 'Reemplaza la contraseña de administrador actual. La contraseña anterior deja de funcionar en la interfaz web y en WebDAV cuando copyparty se reinicia.',
+    18: 'Enlaces compartidos',
+    19: 'Elige si puedes crear enlaces compartidos a archivos y carpetas concretos',
+    20: 'Permitir enlaces compartidos',
+    21: 'Cuando está habilitado, la cuenta de administrador puede crear enlaces a archivos o carpetas elegidos desde el botón de compartir de la interfaz web, cada uno con contraseña y caducidad opcionales. Cualquiera con un enlace puede abrirlo sin iniciar sesión.',
   },
   de_DE: {
     0: 'copyparty wird gestartet',
@@ -38,6 +42,10 @@ export default {
     15: 'Wenn aktiviert, kann jeder, der copyparty erreicht, Ihre Dateien ohne Anmeldung durchsuchen und herunterladen. Hochladen, Umbenennen und Löschen erfordern immer das Administrator-Passwort.',
     16: 'Legen Sie das Administrator-Passwort fest, bevor Sie sich bei copyparty anmelden',
     17: 'Ersetzt das aktuelle Administrator-Passwort. Das alte Passwort funktioniert für die Weboberfläche und WebDAV nicht mehr, sobald copyparty neu startet.',
+    18: 'Freigabelinks',
+    19: 'Legen Sie fest, ob Sie Freigabelinks zu einzelnen Dateien und Ordnern erstellen können',
+    20: 'Freigabelinks erlauben',
+    21: 'Wenn aktiviert, kann das Administratorkonto über die Teilen-Schaltfläche der Weboberfläche Links zu ausgewählten Dateien oder Ordnern erstellen, jeweils mit optionalem Passwort und Ablaufdatum. Jeder mit einem Link kann ihn ohne Anmeldung öffnen.',
   },
   pl_PL: {
     0: 'Uruchamianie copyparty',
@@ -57,6 +65,10 @@ export default {
     15: 'Po włączeniu każdy, kto ma dostęp do copyparty, może przeglądać i pobierać Twoje pliki bez logowania. Wysyłanie, zmiana nazwy i usuwanie zawsze wymagają hasła administratora.',
     16: 'Ustaw hasło administratora przed zalogowaniem się do copyparty',
     17: 'Zastępuje obecne hasło administratora. Stare hasło przestaje działać w interfejsie webowym i WebDAV po ponownym uruchomieniu copyparty.',
+    18: 'Linki udostępniania',
+    19: 'Zdecyduj, czy możesz tworzyć linki udostępniania do wybranych plików i folderów',
+    20: 'Zezwól na linki udostępniania',
+    21: 'Po włączeniu konto administratora może tworzyć linki do wybranych plików lub folderów przyciskiem udostępniania w interfejsie webowym, każdy z opcjonalnym hasłem i terminem ważności. Każdy, kto ma link, może go otworzyć bez logowania.',
   },
   fr_FR: {
     0: 'Démarrage de copyparty',
@@ -76,5 +88,9 @@ export default {
     15: 'Lorsque cette option est activée, toute personne pouvant joindre copyparty peut parcourir et télécharger vos fichiers sans se connecter. L’envoi, le renommage et la suppression exigent toujours le mot de passe administrateur.',
     16: 'Définissez le mot de passe administrateur avant de vous connecter à copyparty',
     17: 'Remplace le mot de passe administrateur actuel. L’ancien mot de passe cesse de fonctionner pour l’interface web et WebDAV dès que copyparty redémarre.',
+    18: 'Liens de partage',
+    19: 'Choisissez si vous pouvez créer des liens de partage vers des fichiers et dossiers précis',
+    20: 'Autoriser les liens de partage',
+    21: 'Lorsque cette option est activée, le compte administrateur peut créer des liens vers des fichiers ou dossiers choisis depuis le bouton de partage de l’interface web, chacun avec un mot de passe et une expiration facultatifs. Toute personne disposant d’un lien peut l’ouvrir sans se connecter.',
   },
 } satisfies Record<string, LangDict>
