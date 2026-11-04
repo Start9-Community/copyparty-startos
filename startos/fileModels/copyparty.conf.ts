@@ -24,6 +24,8 @@ function toFile({ adminPassword, publicRead, sharing }: Config): string {
 [global]
 ${sharing ? '  shr: /shares\n' : ''}  http-only
   xff-src: 127.0.0.0/8, ::1/128, 10.0.3.1/32, fd00:3::1/128
+  rproxy: -1
+  xf-proto-fb: http
   e2dsa
   e2ts
   ansi
