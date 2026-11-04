@@ -49,7 +49,7 @@ The `ac` edition bundles FFmpeg and Pillow, which is what makes image, video and
 
 The entrypoint applies a bootstrap config baked into the image — `chdir: /w` and `no-crt` — and ends with `% /cfg`, which includes every `*.conf` file in that directory in alphabetical order. That include is what loads the package's own config, and it is also the escape hatch described under [File Models](#file-models).
 
-Because the container runs as root, mounted volumes need no ownership fixup and there is no `chown` oneshot. No StartOS-managed environment variables are set; everything is driven by the generated config file.
+Because the container runs as root, mounted volumes need no ownership fixup and there is no `chown` oneshot. The one environment variable set is `PYTHONUNBUFFERED=1`, so copyparty's log reaches the service log as it is written; everything else is driven by the generated config file.
 
 ## Volume and Data Layout
 
@@ -76,7 +76,7 @@ One model, bound to `/cfg/00-startos.conf`, and every value in it except three i
 
 copyparty's config is a bespoke format, not YAML, despite the modeline upstream puts in its examples — so the model is a `FileHelper.raw` with a hand-written renderer and parser rather than a schema over a standard encoding.
 
-**Enforced** — rewritten whenever the package writes the file: the global block (`http-only`, `xff-src`, `e2dsa`, `e2ts`, `ansi`, `name`, `hist`, `df`) and the single `/` volume pointing at `/w`. A hand edit to any of them is discarded on the next action.
+**Enforced** — rewritten whenever the package writes the file: the global block (`http-only`, `xff-src`, `rproxy`, `xf-proto-fb`, `e2dsa`, `e2ts`, `ansi`, `name`, `hist`, `df`) and the single `/` volume pointing at `/w`. A hand edit to any of them is discarded on the next action.
 
 **Yours:** the admin password, through Set Admin Password, anonymous read, through Public Access, and share links (`shr`), through Share Links. The password is stored in this file in cleartext — copyparty hashes account passwords only when `--ah-alg` is set, and the package leaves it unset — so the file is as sensitive as the credential, and rotating it means re-running the action rather than editing the file.
 
@@ -96,7 +96,7 @@ One interface. copyparty serves its web UI and WebDAV from the same port, so bot
 
 The port is bound on the `main` MultiHost and is not masked. The config sets `http-only`: TLS termination is StartOS's job, and leaving it on would make copyparty generate and serve its own self-signed certificate.
 
-StartOS adds forwarded host, protocol and client-address headers when it proxies the interface. The generated config trusts those headers only from loopback and the StartOS bridge gateway. This lets copyparty recognize the browser-facing HTTPS origin when checking login requests without trusting headers supplied by arbitrary LAN clients.
+StartOS adds forwarded host, protocol and client-address headers when it proxies the interface. The generated config trusts those headers only from loopback and the StartOS bridge gateway, so copyparty recognizes the browser-facing HTTPS origin when checking login requests without trusting headers supplied by arbitrary LAN clients. The StartOS proxy replaces any client-supplied `X-Forwarded-For` with the single address it received the connection from, so `rproxy: -1` takes that entry as the client: access logs, rate limits and bans apply per client rather than to the proxy's address. Over plain HTTP the proxy sends no `X-Forwarded-Proto`, and `xf-proto-fb: http` supplies it.
 
 ## Installation and First-Run Flow
 

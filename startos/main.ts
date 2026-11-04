@@ -19,7 +19,10 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   return sdk.Daemons.of(effects).addDaemon('primary', {
     subcontainer,
-    exec: { command: sdk.useEntrypoint() },
+    exec: {
+      command: sdk.useEntrypoint(),
+      env: { PYTHONUNBUFFERED: '1' },
+    },
     ready: {
       display: i18n('Web Interface'),
       // The status code is the signal: copyparty answers / at 200 signed in or
